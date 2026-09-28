@@ -3,12 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>about:blank opener</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Opener/h1>
+  <h1>Opener</h1>
 
-  <input id="urlInput" type="text" placeholder="https://example.com" style="width:300px;">
-  <button id="openBtn">Open</button>
+  <div id="setup">
+    <input id="urlInput" type="text" placeholder="https://example.com" style="width:300px;">
+    <button id="openBtn">Save and open</button>
+  </div>
+
+  <div id="saved" hidden>
+    <p id="status">Launching...</p>
+    <button id="launchBtn">Launch</button>
+    <button id="changeBtn">Change link</button>
+  </div>
 
   <script src="script.js"></script>
 </body>
