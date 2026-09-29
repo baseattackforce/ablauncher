@@ -86,18 +86,34 @@ document.getElementById("changeBtn").onclick = () => {
 const params = new URLSearchParams(location.search);
 if (params.has("reset")) store.clear();
 
+// Popup blocked and nothing to click: show the page in this tab instead, so
+// it still goes straight there. The address bar keeps this site's URL.
+function embedHere(url) {
+    const esc = url.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    document.open();
+    document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Loading...</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        iframe { border: none; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <iframe src="${esc}"></iframe>
+</body>
+</html>`);
+    document.close();
+    window.onbeforeunload = (e) => { e.preventDefault(); e.returnValue = ""; return ""; };
+}
+
 const existing = store.get();
 if (existing) {
-    showSaved(existing);
-    // Browsers usually block popups with no click behind them. If this one is
-    // blocked, the page stays up with a Launch button, and any click launches.
-    if (!launch(existing)) {
-        status.textContent = "Click anywhere to launch.";
-        document.addEventListener("click", (e) => {
-            if (e.target.id === "changeBtn") return;
-            run(existing);
-        }, { once: true });
-    } else {
+    if (launch(existing)) {
         closeSelf();
+    } else {
+        embedHere(existing);
     }
 }
