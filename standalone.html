@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title>about:blank opener</title>
+<style>
+body{font-family:sans-serif;padding:20px}
+input{padding:8px;font-size:16px}
+button{padding:8px 12px;font-size:16px;cursor:pointer}
+</style>
+<h1>Opener</h1>
+<div id="setup"><input id="u" placeholder="https://example.com" style="width:300px"> <button id="go">Save and open</button></div>
+<div id="saved" hidden><p id="st"></p><button id="ch">Change link</button></div>
+<script>
+// A data: page has an opaque origin, so localStorage is unavailable. The link
+// lives in the URL fragment instead: after saving, bookmark the address bar
+// and every load of that bookmark goes straight there.
+const $ = (i) => document.getElementById(i);
+const norm = (r) => {
+  r = r.trim();
+  if (!r) return null;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(r)) r = "https://" + r;
+  try { return new URL(r).href; } catch (e) { return null; }
+};
+const esc = (u) => u.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+const page = (u) => `<!DOCTYPE html><title>Loading...</title><style>html,body{margin:0;height:100%;overflow:hidden}iframe{border:0;width:100%;height:100%}</style><iframe src="${esc(u)}"></iframe>`;
+const guard = (e) => { e.preventDefault(); e.returnValue = ""; return ""; };
+const saved = () => { try { return norm(decodeURIComponent(location.hash.slice(1))); } catch (e) { return null; } };
+
+function launch(u) {
+  const w = window.open("about:blank");
+  if (!w) return false;
+  w.document.write(page(u));
+  w.document.close();
+  w.addEventListener("beforeunload", guard);
+  w.onbeforeunload = guard;
+  return true;
+}
+function closeSelf() {
+  window.close();
+  setTimeout(() => { if (!window.closed) location.replace("about:blank"); }, 300);
+}
+function embedHere(u) {
+  document.open();
+  document.write(page(u));
+  document.close();
+  window.onbeforeunload = guard;
+}
+
+$("go").onclick = () => {
+  const u = norm($("u").value);
+  if (!u) return alert("Enter a valid URL first");
+  location.hash = encodeURIComponent(u);
+  $("setup").hidden = true;
+  $("saved").hidden = false;
+  $("st").textContent = "Saved. Bookmark this page to reopen it with one click.";
+  if (launch(u)) closeSelf();
+  else $("st").textContent = "Saved, but the popup was blocked. Allow popups, or bookmark this page and reload it.";
+};
+$("ch").onclick = () => { location.hash = ""; $("saved").hidden = true; $("setup").hidden = false; };
+
+const u = saved();
+if (u) { if (launch(u)) closeSelf(); else embedHere(u); }
+</script>
